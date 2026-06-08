@@ -66,7 +66,7 @@ ATIVIDADE-PRATICA-API-REST-BANCO-DE-DADOS
 ## 1. Clonar o repositório
 
 ```bash
-git clone URL_DO_REPOSITORIO
+git clone https://github.com/GabrielVieira-a/Atividade-Pratica-API-REST-Banco-de-Dados.git
 ```
 
 ## 2. Entrar na pasta
