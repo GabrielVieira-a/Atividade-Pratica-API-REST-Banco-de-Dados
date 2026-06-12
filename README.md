@@ -1,4 +1,4 @@
-#  Sistema de Controle de Estoque - API REST Segura
+#  API REST DE ALMOXARIFADO - BANCO DE DADOS - JWT - BCRYPT
 
 ![Node.js](https://img.shields.io/badge/Node.js-Express-green)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-blue)
