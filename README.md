@@ -1,28 +1,55 @@
-#  Sistema de Controle de Estoque - API REST
+#  Sistema de Controle de Estoque - API REST Segura
+
+![Node.js](https://img.shields.io/badge/Node.js-Express-green)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-blue)
+![SQLite](https://img.shields.io/badge/SQLite-Database-lightgrey)
+![JWT](https://img.shields.io/badge/Auth-JWT-orange)
+![License](https://img.shields.io/badge/Status-Acadêmico-success)
 
 ##  Sobre o Projeto
 
-Este projeto consiste em uma API REST desenvolvida em Node.js com Express e Prisma ORM para gerenciamento de estoque.
+Este projeto consiste em uma API REST desenvolvida com **Node.js**, **Express**, **Prisma ORM** e **SQLite**, com o objetivo de realizar o gerenciamento de estoque de uma empresa.
 
-A aplicação permite realizar o cadastro e gerenciamento de:
+A aplicação permite:
 
-- Categorias de produtos
-- Fornecedores
-- Produtos
-- Movimentações de estoque
+- Gerenciar categorias de produtos
+- Gerenciar fornecedores
+- Gerenciar produtos
+- Registrar movimentações de estoque
+- Controlar entradas e saídas automaticamente
+- Autenticar usuários utilizando JWT
+- Proteger rotas privadas
+- Garantir a integridade do estoque
 
-Além disso, o sistema realiza automaticamente o controle de entrada e saída de produtos, atualizando o estoque disponível e impedindo saídas superiores à quantidade em estoque.
+---
+
+#  Objetivos
+
+Implementar uma API REST completa aplicando os conceitos de:
+
+- Arquitetura em camadas
+- Banco de Dados Relacional
+- ORM (Prisma)
+- CRUD Completo
+- Relacionamentos entre entidades
+- Regras de negócio
+- Autenticação e autorização
+- Segurança com JWT e BCrypt
 
 ---
 
 #  Tecnologias Utilizadas
 
-- Node.js
-- Express.js
-- Prisma ORM
-- SQLite
-- JavaScript
-- Postman (testes da API)
+| Tecnologia | Função |
+|------------|---------|
+| Node.js | Ambiente de execução |
+| Express.js | Framework web |
+| Prisma ORM | Acesso ao banco de dados |
+| SQLite | Banco de dados |
+| JWT | Autenticação |
+| BCrypt | Criptografia de senhas |
+| Postman | Testes da API |
+| JavaScript | Linguagem de programação |
 
 ---
 
@@ -38,12 +65,17 @@ ATIVIDADE-PRATICA-API-REST-BANCO-DE-DADOS
 │
 ├── src
 │   ├── controllers
+│   │   ├── authController.js
 │   │   ├── categoryController.js
 │   │   ├── supplierController.js
 │   │   ├── productController.js
 │   │   └── stockMovementController.js
 │   │
+│   ├── middlewares
+│   │   └── authenticate.js
+│   │
 │   ├── routes
+│   │   ├── authRoutes.js
 │   │   ├── categoryRoutes.js
 │   │   ├── supplierRoutes.js
 │   │   ├── productRoutes.js
@@ -56,7 +88,8 @@ ATIVIDADE-PRATICA-API-REST-BANCO-DE-DADOS
 ├── .gitignore
 ├── package.json
 ├── package-lock.json
-└── server.js
+├── server.js
+└── README.md
 ```
 
 ---
@@ -66,7 +99,7 @@ ATIVIDADE-PRATICA-API-REST-BANCO-DE-DADOS
 ## 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/GabrielVieira-a/Atividade-Pratica-API-REST-Banco-de-Dados.git
+git clone https://github.com/seu-usuario/seu-repositorio.git
 ```
 
 ## 2. Entrar na pasta
@@ -85,15 +118,18 @@ npm install
 
 Crie um arquivo chamado:
 
-```text
+```env
 .env
 ```
 
-Conteúdo:
+Utilize como base:
 
 ```env
 DATABASE_URL="file:./dev.db"
+JWT_SECRET="sua_chave_secreta"
 ```
+
+---
 
 ## 5. Executar as migrations
 
@@ -101,7 +137,9 @@ DATABASE_URL="file:./dev.db"
 npx prisma migrate dev
 ```
 
-## 6. Iniciar o servidor
+---
+
+## 6. Iniciar a aplicação
 
 ```bash
 node server.js
@@ -115,55 +153,68 @@ http://localhost:3000
 
 ---
 
-#  Banco de Dados
+#  Modelagem do Banco de Dados
 
-O banco foi modelado utilizando Prisma ORM.
-
-## Entidades
-
-### Category
+## User
 
 ```text
-- id
-- name
-- description
-- createdAt
+id
+email
+password
+createdAt
 ```
 
-### Supplier
+---
+
+## Category
 
 ```text
-- id
-- name
-- cnpj
-- email
-- phone
-- createdAt
+id
+name
+description
+createdAt
 ```
 
-### Product
+---
+
+## Supplier
 
 ```text
-- id
-- name
-- description
-- unity
-- currentStock
-- minimumStock
-- categoryId
-- supplierId
-- createdAt
+id
+name
+cnpj
+email
+phone
+createdAt
 ```
 
-### StockMovement
+---
+
+## Product
 
 ```text
-- id
-- type (IN | OUT)
-- quantity
-- notes
-- productId
-- createdAt
+id
+name
+description
+unity
+currentStock
+minimumStock
+categoryId
+supplierId
+createdAt
+```
+
+---
+
+## StockMovement
+
+```text
+id
+type
+quantity
+notes
+productId
+createdAt
 ```
 
 ---
@@ -172,26 +223,82 @@ O banco foi modelado utilizando Prisma ORM.
 
 ### Category → Product
 
-Uma categoria pode possuir vários produtos.
-
 ```text
-Category 1:N Product
+1 Categoria possui N Produtos
 ```
+
+---
 
 ### Supplier → Product
 
-Um fornecedor pode fornecer vários produtos.
-
 ```text
-Supplier 1:N Product
+1 Fornecedor possui N Produtos
 ```
+
+---
 
 ### Product → StockMovement
 
-Um produto pode possuir várias movimentações.
-
 ```text
-Product 1:N StockMovement
+1 Produto possui N Movimentações
+```
+
+---
+
+#  Autenticação JWT
+
+A API utiliza autenticação baseada em JSON Web Token.
+
+Após realizar o login, um token JWT é retornado e deve ser enviado no cabeçalho das requisições protegidas.
+
+Exemplo:
+
+```http
+Authorization: Bearer SEU_TOKEN
+```
+
+---
+
+#  Cadastro de Usuário
+
+## Registrar usuário
+
+```http
+POST /auth/register
+```
+
+Body:
+
+```json
+{
+  "email": "usuario@email.com",
+  "password": "123456"
+}
+```
+
+---
+
+#  Login
+
+```http
+POST /auth/login
+```
+
+Body:
+
+```json
+{
+  "email": "usuario@email.com",
+  "password": "123456"
+}
+```
+
+Resposta:
+
+```json
+{
+  "token": "JWT_TOKEN"
+}
 ```
 
 ---
@@ -200,131 +307,48 @@ Product 1:N StockMovement
 
 ## Categories
 
-### Criar categoria
-
-```http
-POST /categories
-```
-
-### Listar categorias
-
-```http
-GET /categories
-```
-
-### Buscar categoria por ID
-
-```http
-GET /categories/:id
-```
-
-### Atualizar categoria
-
-```http
-PUT /categories/:id
-```
-
-### Remover categoria
-
-```http
-DELETE /categories/:id
-```
+| Método | Endpoint |
+|----------|----------|
+| POST | /categories |
+| GET | /categories |
+| GET | /categories/:id |
+| PUT | /categories/:id |
+| DELETE | /categories/:id |
 
 ---
 
 ## Suppliers
 
-### Criar fornecedor
-
-```http
-POST /suppliers
-```
-
-### Listar fornecedores
-
-```http
-GET /suppliers
-```
-
-### Buscar fornecedor por ID
-
-```http
-GET /suppliers/:id
-```
-
-### Atualizar fornecedor
-
-```http
-PUT /suppliers/:id
-```
-
-### Remover fornecedor
-
-```http
-DELETE /suppliers/:id
-```
+| Método | Endpoint |
+|----------|----------|
+| POST | /suppliers |
+| GET | /suppliers |
+| GET | /suppliers/:id |
+| PUT | /suppliers/:id |
+| DELETE | /suppliers/:id |
 
 ---
 
 ## Products
 
-### Criar produto
-
-```http
-POST /products
-```
-
-### Listar produtos
-
-```http
-GET /products
-```
-
-### Buscar produto por ID
-
-```http
-GET /products/:id
-```
-
-### Atualizar produto
-
-```http
-PUT /products/:id
-```
-
-### Remover produto
-
-```http
-DELETE /products/:id
-```
+| Método | Endpoint |
+|----------|----------|
+| POST | /products |
+| GET | /products |
+| GET | /products/:id |
+| PUT | /products/:id |
+| DELETE | /products/:id |
 
 ---
 
 ## Stock Movements
 
-### Registrar movimentação
-
-```http
-POST /stock-movements
-```
-
-### Listar movimentações
-
-```http
-GET /stock-movements
-```
-
-### Buscar movimentação por ID
-
-```http
-GET /stock-movements/:id
-```
-
-### Buscar movimentações de um produto
-
-```http
-GET /stock-movements/product/:productId
-```
+| Método | Endpoint |
+|----------|----------|
+| POST | /stock-movements |
+| GET | /stock-movements |
+| GET | /stock-movements/:id |
+| GET | /stock-movements/product/:productId |
 
 ---
 
@@ -332,55 +356,58 @@ GET /stock-movements/product/:productId
 
 ## Entrada de Estoque
 
-Quando uma movimentação do tipo:
+Movimentações do tipo:
 
 ```text
 IN
 ```
 
-é registrada, a quantidade é adicionada ao estoque atual do produto.
+aumentam automaticamente a quantidade disponível do produto.
 
 Exemplo:
 
 ```text
-Estoque atual: 50
+Estoque Atual: 50
+
 Entrada: +20
 
-Novo estoque: 70
+Novo Estoque: 70
 ```
 
 ---
 
 ## Saída de Estoque
 
-Quando uma movimentação do tipo:
+Movimentações do tipo:
 
 ```text
 OUT
 ```
 
-é registrada, a quantidade é removida do estoque.
+reduzem automaticamente a quantidade disponível.
 
 Exemplo:
 
 ```text
-Estoque atual: 70
+Estoque Atual: 70
+
 Saída: -10
 
-Novo estoque: 60
+Novo Estoque: 60
 ```
 
 ---
 
 ## Validação de Estoque
 
-O sistema não permite saída superior ao estoque disponível.
+O sistema impede saídas superiores ao estoque disponível.
 
 Exemplo:
 
 ```text
-Estoque atual: 30
-Saída solicitada: 50
+Estoque Atual: 30
+
+Saída Solicitada: 50
 ```
 
 Resposta:
@@ -393,26 +420,58 @@ Resposta:
 
 ---
 
-#  Testes
+#  Testes Realizados
 
 Todos os endpoints foram testados utilizando o Postman.
 
-Os testes realizados incluem:
+### Testes executados
 
-- Criação de registros
-- Listagem de registros
-- Busca por ID
-- Atualização de registros
-- Exclusão de registros
-- Entrada de estoque
-- Saída de estoque
-- Validação de estoque insuficiente
-- Relacionamentos entre entidades
+✅ Cadastro de usuário
+
+✅ Login
+
+✅ Geração de JWT
+
+✅ Proteção de rotas
+
+✅ CRUD de categorias
+
+✅ CRUD de fornecedores
+
+✅ CRUD de produtos
+
+✅ Entrada de estoque
+
+✅ Saída de estoque
+
+✅ Validação de estoque insuficiente
+
+✅ Consulta de movimentações
+
+✅ Relacionamentos entre entidades
+
+---
+
+#  Segurança
+
+O projeto implementa:
+
+- Senhas criptografadas com BCrypt
+- Autenticação JWT
+- Middleware de proteção de rotas
+- Validação de credenciais
+- Controle de acesso a endpoints privados
 
 ---
 
 #  Autor
 
-**Gabriel Vieira**
+**Gabriel Vieira Aranha**
 
-Projeto desenvolvido como atividade prática da disciplina de Banco de Dados utilizando Node.js, Express, Prisma ORM e SQLite.
+Projeto desenvolvido para a disciplina de Banco de Dados utilizando Node.js, Express, Prisma ORM, SQLite e autenticação JWT.
+
+---
+
+#  Licença
+
+Projeto desenvolvido exclusivamente para fins acadêmicos.
